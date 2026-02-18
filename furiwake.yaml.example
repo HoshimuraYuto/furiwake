@@ -1,0 +1,47 @@
+listen: ":52860"
+spoof_model: "claude-sonnet-4-6"
+default_provider: "anthropic"
+timeout_seconds: 300
+
+providers:
+  anthropic:
+    type: passthrough
+    url: "https://api.anthropic.com"
+    auth:
+      type: none
+
+  codex:
+    type: chatgpt
+    url: "https://chatgpt.com/backend-api/codex/responses"
+    # default model (can be overridden per-agent with @model:<name>)
+    model: "gpt-5.3-codex"
+    # default reasoning effort for chatgpt provider (can be overridden with @reasoning:<level>)
+    reasoning_effort: "medium"
+    auth:
+      type: codex
+
+  openai:
+    type: openai
+    url: "https://api.openai.com/v1/chat/completions"
+    # default model (can be overridden per-agent with @model:<name>)
+    model: "gpt-5-mini"
+    auth:
+      type: bearer
+      token_env: "OPENAI_API_KEY"
+
+  ollama:
+    type: openai
+    url: "http://localhost:11434/v1/chat/completions"
+    # default model (can be overridden per-agent with @model:<name>)
+    model: "qwen2.5-coder:32b"
+    auth:
+      type: none
+
+  openrouter:
+    type: openai
+    url: "https://openrouter.ai/api/v1/chat/completions"
+    # default model (can be overridden per-agent with @model:<name>)
+    model: "z-ai/glm-4.5-air:free"
+    auth:
+      type: bearer
+      token_env: "OPENROUTER_API_KEY"

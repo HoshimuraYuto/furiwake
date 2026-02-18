@@ -1,0 +1,4 @@
+[ "$CI" = "true" ] && exit 0
+if git diff --cached --name-only | grep -qE '\.(go|js|ts|json|yaml|yml|md)'; then
+  npx --no -- lint-staged
+fi
