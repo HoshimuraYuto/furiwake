@@ -1,0 +1,28 @@
+name: furiwake-docker
+
+services:
+  furiwake:
+    build: .
+    container_name: furiwake
+    ports:
+      - "52860:52860"
+    volumes:
+      - ./furiwake.yaml:/app/furiwake.yaml:ro
+      # Codex auth (required only if using the codex provider)
+      - ~/.codex:/root/.codex:ro
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+    restart: unless-stopped
+    networks:
+      - furiwake-net
+      # Add more networks here to reach other containers, e.g.:
+      # - my-other-net
+
+networks:
+  furiwake-net:
+    name: furiwake-net
+  # Declare additional networks (external: true = network already exists)
+  # my-other-net:
+  #   external: true

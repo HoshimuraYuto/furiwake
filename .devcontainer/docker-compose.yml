@@ -1,0 +1,32 @@
+name: furiwake-devcontainer
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      # Mount the bare repo root so .bare is accessible inside the container
+      - ../..:/workspaces/furiwake:cached
+      # Shared configs
+      - ../../../shared/tmux.conf:/home/node/.tmux.conf:ro
+      - ../../../shared/bash_aliases:/home/node/.bash_aliases:ro
+      # Claude Code configs
+      - ../../../shared/.claude/settings.json:/home/node/.claude/settings.json:ro
+      - ../../../shared/.claude/skills:/home/node/.claude/skills:ro
+      - ../../../shared/.claude/agents:/home/node/.claude/agents:ro
+      - ../../../shared/.claude/agent-memory:/home/node/.claude/agent-memory
+      - ../../../shared/.claude/scripts:/home/node/.claude/scripts:ro
+      - ../../../shared/.claude/statusline.sh:/home/node/.claude/statusline.sh:ro
+      - ../../../shared/docs:/home/node/.claude/docs:ro
+    environment:
+      - ANTHROPIC_BASE_URL=http://furiwake:52860
+    networks:
+      - default
+      - furiwake-net
+    command: sleep infinity
+
+networks:
+  furiwake-net:
+    name: furiwake-net
+    external: true

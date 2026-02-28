@@ -100,6 +100,91 @@ source ~/.bashrc
 
 Then reload: `source ~/.bashrc`
 
+## Docker
+
+Run furiwake as a standalone container that any number of Docker containers (devcontainers, agent containers, etc.) can share.
+
+### Files
+
+```
+docker/
+├── Dockerfile          # Fetches latest furiwake binary via install.sh
+├── docker-compose.yml  # Exposes port 52860, creates furiwake-net network
+├── furiwake.yaml       # Provider config — edit this
+├── .env.example        # API key template
+└── setup.sh            # Start / update helper
+```
+
+### Setup
+
+```bash
+cd docker
+
+# 1. Configure API keys
+cp .env.example .env
+# Edit .env and fill in your keys
+
+# 2. Configure providers
+# Edit furiwake.yaml as needed
+
+# 3. Start (run on the host, before starting devcontainers)
+bash setup.sh
+```
+
+### Authentication in Docker
+
+When running in Docker or devcontainers, furiwake handles authentication differently depending on the provider type:
+
+| Auth type            | How it works in Docker                                                                                              |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `none` (passthrough) | Claude Code sends its own auth headers; furiwake just relays them. No host credentials needed.                      |
+| `bearer`             | API keys are passed via environment variables in `.env`. No host files needed.                                      |
+| `codex`              | furiwake reads `~/.codex/auth.json` **from the host** via volume mount. You must log in to Codex on the host first. |
+
+To use the Codex provider, uncomment the volume mount in `docker/docker-compose.yml`:
+
+```yaml
+volumes:
+  - ~/.codex:/root/.codex:ro
+```
+
+Then log in on the host machine:
+
+```bash
+codex
+```
+
+### Connect other containers
+
+Add `furiwake-net` to each container that needs to call furiwake, then point `ANTHROPIC_BASE_URL` at the furiwake container by name:
+
+```yaml
+# Other container's docker-compose.yml
+services:
+  my-agent:
+    environment:
+      - ANTHROPIC_BASE_URL=http://furiwake:52860
+    networks:
+      - furiwake-net
+
+networks:
+  furiwake-net:
+    external: true
+```
+
+> **Note:** Use `http://furiwake:52860` (container name) from other containers,
+> and `http://localhost:52860` from the host.
+
+### Maintenance
+
+```bash
+# Apply .env changes or compose config changes
+bash setup.sh
+
+# Pull latest furiwake binary (clears Docker build cache)
+bash setup.sh update
+```
+
 ## Features
 
 **Routing & Translation**

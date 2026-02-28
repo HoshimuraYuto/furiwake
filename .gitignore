@@ -3,3 +3,5 @@
 /furiwake
 furiwake.yaml
 furiwake-debug.log
+
+.env

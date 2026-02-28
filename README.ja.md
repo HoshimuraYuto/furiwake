@@ -100,6 +100,91 @@ source ~/.bashrc
 
 追記後は `source ~/.bashrc` で反映。
 
+## Docker
+
+furiwake をスタンドアロンコンテナとして起動し、複数の Docker コンテナ（devcontainer、エージェントコンテナなど）から共有して使う構成です。
+
+### ファイル構成
+
+```
+docker/
+├── Dockerfile          # install.sh で最新バイナリを取得
+├── docker-compose.yml  # ポート 52860 公開 + furiwake-net ネットワーク作成
+├── furiwake.yaml       # プロバイダ設定 — ここを編集
+├── .env.example        # API キーのテンプレート
+└── setup.sh            # 起動 / 更新ヘルパー
+```
+
+### セットアップ
+
+```bash
+cd docker
+
+# 1. API キーを設定
+cp .env.example .env
+# .env を編集してキーを記入
+
+# 2. プロバイダを設定
+# 必要に応じて furiwake.yaml を編集
+
+# 3. 起動（devcontainer を起動する前にホストで実行）
+bash setup.sh
+```
+
+### Docker 環境での認証
+
+Docker や devcontainer で動かす場合、プロバイダの認証タイプによって動作が異なります：
+
+| 認証タイプ            | Docker での動作                                                                                                                |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `none`（passthrough） | Claude Code が自身の認証ヘッダーを送信し、furiwake はそのままリレーします。ホスト側の認証情報は不要。                          |
+| `bearer`              | `.env` の環境変数で API キーを渡します。ホスト側のファイルは不要。                                                             |
+| `codex`               | furiwake がボリュームマウント経由で**ホストの** `~/.codex/auth.json` を読み取ります。事前にホスト側で Codex にログインが必要。 |
+
+Codex プロバイダを使う場合は、`docker/docker-compose.yml` のボリュームマウントをコメント解除してください：
+
+```yaml
+volumes:
+  - ~/.codex:/root/.codex:ro
+```
+
+そしてホストマシンでログインします：
+
+```bash
+codex
+```
+
+### 他のコンテナから接続する
+
+接続したい各コンテナの docker-compose.yml に `furiwake-net` を追加し、`ANTHROPIC_BASE_URL` をコンテナ名で指定します：
+
+```yaml
+# 接続側コンテナの docker-compose.yml
+services:
+  my-agent:
+    environment:
+      - ANTHROPIC_BASE_URL=http://furiwake:52860
+    networks:
+      - furiwake-net
+
+networks:
+  furiwake-net:
+    external: true
+```
+
+> **注意:** コンテナ間は `http://furiwake:52860`（コンテナ名）、
+> ホストからは `http://localhost:52860` を使います。
+
+### メンテナンス
+
+```bash
+# .env の変更や compose 設定の変更を反映
+bash setup.sh
+
+# furiwake の新バージョンを取得（ビルドキャッシュをクリアして再ビルド）
+bash setup.sh update
+```
+
 ## 特徴
 
 **ルーティング & API 変換**

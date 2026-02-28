@@ -7,4 +7,12 @@ RUN apt-get update \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
+USER node
+RUN curl -fsSL https://claude.ai/install.sh | bash
+USER root
+
+RUN npm i -g @openai/codex @google/gemini-cli
+
+ENV TZ=Asia/Tokyo
+
 ENV CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1

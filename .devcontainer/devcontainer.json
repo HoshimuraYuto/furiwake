@@ -3,10 +3,11 @@
 {
   "name": "Node.js & TypeScript",
   // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": ".."
-  },
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+
+  // Open main/ as the workspace folder in VS Code
+  "workspaceFolder": "/workspaces/furiwake/main",
 
   // Features to add to the dev container. More info: https://containers.dev/features.
   // "features": {},
