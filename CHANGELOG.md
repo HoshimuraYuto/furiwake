@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/HoshimuraYuto/furiwake/compare/v1.0.0...v1.0.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* always force stream:true toward Codex and collect SSE for non-streaming callers ([35a97aa](https://github.com/HoshimuraYuto/furiwake/commit/35a97aa0ba18d96e8fa6f61e352c84a7150da3df))
+
 # 1.0.0 (2026-02-18)
 
 
