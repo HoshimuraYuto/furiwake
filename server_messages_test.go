@@ -179,7 +179,11 @@ func TestHandleMessages_ChatGPTNonStream(t *testing.T) {
 		if req.Reasoning != nil {
 			seenReasoningEffort = req.Reasoning.Effort
 		}
-		_, _ = w.Write([]byte(`{"output_text":"hello from responses","usage":{"input_tokens":2,"output_tokens":3}}`))
+		// Codex requires stream:true; respond with SSE including response.completed
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = io.WriteString(w, "event: response.completed\n")
+		_, _ = io.WriteString(w, `data: {"type":"response.completed","response":{"id":"resp_1","status":"completed","output_text":"hello from responses","output":[],"usage":{"input_tokens":2,"output_tokens":3}}}`+"\n\n")
+		_, _ = io.WriteString(w, "data: [DONE]\n\n")
 	}))
 	defer upstream.Close()
 
@@ -234,7 +238,11 @@ func TestHandleMessages_ChatGPTNonStream_ModelOverride(t *testing.T) {
 		if req.Reasoning != nil {
 			seenReasoningEffort = req.Reasoning.Effort
 		}
-		_, _ = w.Write([]byte(`{"output_text":"hello from responses","usage":{"input_tokens":2,"output_tokens":3}}`))
+		// Codex requires stream:true; respond with SSE including response.completed
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = io.WriteString(w, "event: response.completed\n")
+		_, _ = io.WriteString(w, `data: {"type":"response.completed","response":{"id":"resp_1","status":"completed","output_text":"hello from responses","output":[],"usage":{"input_tokens":2,"output_tokens":3}}}`+"\n\n")
+		_, _ = io.WriteString(w, "data: [DONE]\n\n")
 	}))
 	defer upstream.Close()
 

@@ -22,7 +22,11 @@ func (s *Server) proxyChatGPT(
 	anthropicReq AnthropicMessageRequest,
 	incomingHeaders http.Header,
 ) {
+	// Codex requires stream:true for all requests. Force it regardless of the
+	// original caller's preference and handle the non-streaming case by
+	// collecting the SSE stream internally.
 	req := translateAnthropicToResponses(anthropicReq, model, reasoningEffort)
+	req.Stream = true
 	payload, err := json.Marshal(req)
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "failed to encode upstream request")
@@ -39,7 +43,7 @@ func (s *Server) proxyChatGPT(
 		payload,
 		incomingHeaders,
 		provider,
-		anthropicReq.Stream,
+		true, // always stream toward Codex
 		routeName,
 		req.Model,
 		req.Reasoning.Effort,
@@ -66,9 +70,11 @@ func (s *Server) proxyChatGPT(
 		return
 	}
 
-	raw, err := io.ReadAll(resp.Body)
+	// Non-streaming caller: collect the SSE stream and build a JSON response
+	// from the response.completed event.
+	raw, err := collectResponsesStreamAsJSON(resp.Body, s.logger)
 	if err != nil {
-		writeJSONError(w, http.StatusBadGateway, "failed to read upstream response")
+		writeJSONError(w, http.StatusBadGateway, "failed to collect upstream stream: "+err.Error())
 		return
 	}
 	writeJSON(w, http.StatusOK, convertResponsesJSONToAnthropic(raw, s.cfg.SpoofModel))
@@ -156,10 +162,14 @@ func translateAnthropicMessagesToResponsesInput(messages []AnthropicMessage) []R
 				if strings.TrimSpace(block.ToolUseID) == "" {
 					continue
 				}
+				outputText := extractToolResultText(block.Content)
+				if outputText == "" {
+					outputText = "(empty)"
+				}
 				out = append(out, ResponsesInputItem{
 					Type:   "function_call_output",
 					CallID: block.ToolUseID,
-					Output: extractToolResultText(block.Content),
+					Output: outputText,
 				})
 			}
 		}
@@ -685,4 +695,39 @@ func extractResponseToolUses(payload map[string]interface{}) []AnthropicContentB
 		})
 	}
 	return out
+}
+
+// collectResponsesStreamAsJSON reads a Codex SSE stream and returns the
+// response JSON extracted from the response.completed event. This is used
+// when the original caller requested a non-streaming response, but Codex
+// requires stream:true on all requests.
+func collectResponsesStreamAsJSON(src io.Reader, logger *Logger) ([]byte, error) {
+	var responseJSON []byte
+	err := readSSEEvents(src, func(_, data string) error {
+		data = strings.TrimSpace(data)
+		if data == "" || data == "[DONE]" {
+			return nil
+		}
+		logger.Debugf("[CODEX-SSE-COLLECT] data=%s", truncateForLog(data, 500))
+		var event map[string]interface{}
+		if err := json.Unmarshal([]byte(data), &event); err != nil {
+			return nil
+		}
+		if t, _ := event["type"].(string); t == "response.completed" {
+			if resp, ok := event["response"]; ok {
+				b, err := json.Marshal(resp)
+				if err == nil {
+					responseJSON = b
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if responseJSON == nil {
+		return nil, fmt.Errorf("no response.completed event received from Codex stream")
+	}
+	return responseJSON, nil
 }
