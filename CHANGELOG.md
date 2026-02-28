@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/HoshimuraYuto/furiwake/compare/v1.0.1...v1.1.0) (2026-02-28)
+
+
+### Features
+
+* **docker:** add standalone container setup and update devcontainer to compose ([f17b4e2](https://github.com/HoshimuraYuto/furiwake/commit/f17b4e2ce1f81b0fa68787595fb19bdcc0cea628))
+
 ## [1.0.1](https://github.com/HoshimuraYuto/furiwake/compare/v1.0.0...v1.0.1) (2026-02-28)
 
 
