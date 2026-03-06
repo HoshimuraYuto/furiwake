@@ -24,9 +24,13 @@ services:
     networks:
       - default
       - furiwake-net
+      - crawl4ai-net
     command: sleep infinity
 
 networks:
   furiwake-net:
     name: furiwake-net
+    external: true
+  crawl4ai-net:
+    name: crawl4ai-net
     external: true
