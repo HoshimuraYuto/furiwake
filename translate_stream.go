@@ -39,6 +39,7 @@ func (s *Server) proxyOpenAI(
 		routeName,
 		openAIReq.Model,
 		reasoningEffort,
+		"",
 	)
 	if err != nil {
 		writeJSONError(w, mapTransportError(err), err.Error())

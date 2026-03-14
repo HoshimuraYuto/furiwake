@@ -77,40 +77,39 @@ func (s *Server) handleMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	providerName, provider, model, err := ResolveProviderAndModel(anthropicReq.System, anthropicReq.Messages, s.cfg)
+	resolved, err := ResolveAll(anthropicReq.System, anthropicReq.Messages, s.cfg)
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	reasoningEffort := ""
-	reasoningForLog := "-"
-	if provider.Type == ProviderTypeChatGPT {
-		effort, err := ResolveReasoningEffort(anthropicReq.System, anthropicReq.Messages, provider.ReasoningEffort)
-		if err != nil {
-			writeJSONError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		reasoningEffort = effort
-		if effort != "" {
-			reasoningForLog = effort
-		}
-	}
 
+	reasoningForLog := "-"
+	if resolved.ReasoningEffort != "" {
+		reasoningForLog = resolved.ReasoningEffort
+	}
+	presetForLog := "-"
+	if resolved.PresetName != "" {
+		presetForLog = resolved.PresetName
+	}
+	tierForLog := "-"
+	if resolved.ServiceTier != "" {
+		tierForLog = resolved.ServiceTier
+	}
 	requestID := strings.TrimSpace(r.Header.Get("x-request-id"))
 	if requestID == "" {
 		requestID = fmt.Sprintf("req_%d", time.Now().UnixNano())
 	}
 	r.Header.Set("x-request-id", requestID)
-	s.logger.Infof("req=%s route=%s type=%s model=%s reasoning=%s stream=%t", requestID, providerName, provider.Type, model, reasoningForLog, anthropicReq.Stream)
+	s.logger.Infof("req=%s preset=%s route=%s type=%s model=%s reasoning=%s tier=%s stream=%t", requestID, presetForLog, resolved.ProviderName, resolved.Provider.Type, resolved.Model, reasoningForLog, tierForLog, anthropicReq.Stream)
 
 	ctx := r.Context()
-	switch provider.Type {
+	switch resolved.Provider.Type {
 	case ProviderTypePassthrough:
-		s.proxyPassthrough(ctx, w, r, providerName, model, "-", provider, body)
+		s.proxyPassthrough(ctx, w, r, resolved.ProviderName, resolved.Model, "-", resolved.Provider, body)
 	case ProviderTypeOpenAI:
-		s.proxyOpenAI(ctx, w, providerName, provider, model, "-", anthropicReq, r.Header)
+		s.proxyOpenAI(ctx, w, resolved.ProviderName, resolved.Provider, resolved.Model, "-", anthropicReq, r.Header)
 	case ProviderTypeChatGPT:
-		s.proxyChatGPT(ctx, w, providerName, provider, model, reasoningEffort, anthropicReq, r.Header)
+		s.proxyChatGPT(ctx, w, resolved.ProviderName, resolved.Provider, resolved.Model, resolved.ReasoningEffort, resolved.ServiceTier, anthropicReq, r.Header)
 	default:
 		writeJSONError(w, http.StatusBadGateway, "unsupported provider type")
 	}

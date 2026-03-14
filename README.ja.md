@@ -232,6 +232,7 @@ You are a code implementation specialist...
 | `@route:<name>`      | 特定のプロバイダにルーティング              | `@route:codex`      |
 | `@model:<name>`      | プロバイダのデフォルトモデルを上書き        | `@model:gpt-5-mini` |
 | `@reasoning:<level>` | reasoning effort を上書き（`chatgpt` のみ） | `@reasoning:high`   |
+| `@tier:<level>`      | service tier を上書き（`chatgpt` のみ）     | `@tier:priority`    |
 
 ### 解決ルール
 
@@ -251,7 +252,9 @@ You are a code implementation specialist...
 ```
 
 - `@reasoning` の許可値: `none | minimal | low | medium | high | xhigh`
+- `@tier` の許可値: `priority | flex`
 - `@reasoning` 未指定時は設定ファイルの `providers.<name>.reasoning_effort` を使用
+- `@tier` 未指定時は設定ファイルの `providers.<name>.service_tier` を使用
 
 ### リクエストフロー
 

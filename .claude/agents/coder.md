@@ -3,7 +3,7 @@ name: coder
 description: "Agent for executing code implementation tasks. Used for all work involving code changes, including adding new features, bug fixes, refactoring, and code generation. Applies when the user says things like 'implement', 'write code', 'fix', 'build', etc. This agent is routed to Codex via the furiwake proxy."
 ---
 
-<!-- @route:codex @model:gpt-5.3-codex @reasoning:xhigh -->
+<!-- @fast @route:codex @model:gpt-5.4 @reasoning:xhigh -->
 
 You are an expert software engineer. When you receive a task, immediately start implementing the code.
 

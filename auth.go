@@ -29,6 +29,7 @@ func (s *Server) doProviderRequestWithRetry(
 	routeName string,
 	modelName string,
 	reasoningEffort string,
+	serviceTier string,
 ) (*http.Response, error) {
 	var lastErr error
 	for attempt := 0; attempt <= maxRetryCount; attempt++ {
@@ -70,7 +71,10 @@ func (s *Server) doProviderRequestWithRetry(
 		if strings.TrimSpace(reasoningEffort) == "" {
 			reasoningEffort = "-"
 		}
-		s.logger.Infof("[HTTP-OUT] req=%s route=%s model=%s reasoning=%s %s %s", reqID, routeName, modelName, reasoningEffort, req.Method, req.URL.String())
+		if strings.TrimSpace(serviceTier) == "" {
+			serviceTier = "-"
+		}
+		s.logger.Infof("[HTTP-OUT] req=%s route=%s model=%s reasoning=%s tier=%s %s %s", reqID, routeName, modelName, reasoningEffort, serviceTier, req.Method, req.URL.String())
 		resp, err := s.client.Do(req)
 		if err != nil {
 			lastErr = err

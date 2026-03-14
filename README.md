@@ -232,6 +232,7 @@ A working sample is included at `.claude/agents/coder.md`.
 | `@route:<name>`      | Route to a specific provider               | `@route:codex`      |
 | `@model:<name>`      | Override provider's default model          | `@model:gpt-5-mini` |
 | `@reasoning:<level>` | Override reasoning effort (`chatgpt` only) | `@reasoning:high`   |
+| `@tier:<level>`      | Override service tier (`chatgpt` only)     | `@tier:priority`    |
 
 ### Resolution Rules
 
@@ -251,7 +252,9 @@ A working sample is included at `.claude/agents/coder.md`.
 ```
 
 - `@reasoning` allowed values: `none | minimal | low | medium | high | xhigh`
+- `@tier` allowed values: `priority | flex`
 - If `@reasoning` is missing, `providers.<name>.reasoning_effort` from config is used
+- If `@tier` is missing, `providers.<name>.service_tier` from config is used
 
 ### Request Flow
 

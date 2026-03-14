@@ -10,6 +10,9 @@ func testConfig() *Config {
 			"openai":    {Type: ProviderTypeOpenAI, URL: "https://api.openai.com", Model: "gpt-5-mini"},
 			"codex":     {Type: ProviderTypeChatGPT, URL: "https://chatgpt.com/backend-api/codex/responses", Model: "gpt-5"},
 		},
+		Presets: map[string]PresetConfig{
+			"fast": {Provider: "codex", Model: "gpt-5.4", ReasoningEffort: "low", ServiceTier: "priority"},
+		},
 	}
 }
 
@@ -243,5 +246,128 @@ func TestResolveReasoningEffort_InvalidMarker(t *testing.T) {
 	_, err := ResolveReasoningEffort("<!-- @reasoning:ultra -->", nil, "medium")
 	if err == nil {
 		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestExtractServiceTier(t *testing.T) {
+	got := ExtractServiceTier("hello\n@tier:flex\nworld")
+	if got != "flex" {
+		t.Fatalf("expected flex, got %q", got)
+	}
+
+	got = ExtractServiceTier([]AnthropicContentBlock{
+		{Type: "text", Text: "abc"},
+		{Type: "text", Text: "<!-- @tier:priority -->"},
+	})
+	if got != "priority" {
+		t.Fatalf("expected priority, got %q", got)
+	}
+
+	got = ExtractServiceTier("no tier here")
+	if got != "" {
+		t.Fatalf("expected empty, got %q", got)
+	}
+}
+
+func TestNormalizeServiceTier_LegacyFastMapsToPriority(t *testing.T) {
+	if got := NormalizeServiceTier("fast"); got != "priority" {
+		t.Fatalf("expected priority, got %q", got)
+	}
+}
+
+func TestExtractPresetName(t *testing.T) {
+	names := []string{"fast", "slow"}
+
+	// Match at end of string
+	got := ExtractPresetName("use @fast", names)
+	if got != "fast" {
+		t.Fatalf("expected fast, got %q", got)
+	}
+
+	// Match followed by space
+	got = ExtractPresetName("@fast please", names)
+	if got != "fast" {
+		t.Fatalf("expected fast, got %q", got)
+	}
+
+	// Match in HTML comment
+	got = ExtractPresetName("<!-- @fast -->", names)
+	if got != "fast" {
+		t.Fatalf("expected fast, got %q", got)
+	}
+
+	// Should NOT match @faster (no word boundary)
+	got = ExtractPresetName("@faster", names)
+	if got != "" {
+		t.Fatalf("expected empty for @faster, got %q", got)
+	}
+
+	// No match
+	got = ExtractPresetName("no preset here", names)
+	if got != "" {
+		t.Fatalf("expected empty, got %q", got)
+	}
+
+	// Match from content blocks
+	got = ExtractPresetName([]AnthropicContentBlock{
+		{Type: "text", Text: "<!-- @slow -->"},
+	}, names)
+	if got != "slow" {
+		t.Fatalf("expected slow, got %q", got)
+	}
+}
+
+func TestResolveAll_WithPreset(t *testing.T) {
+	cfg := testConfig()
+	resolved, err := ResolveAll("<!-- @fast -->", nil, cfg)
+	if err != nil {
+		t.Fatalf("ResolveAll error: %v", err)
+	}
+	if resolved.ProviderName != "codex" {
+		t.Fatalf("expected provider codex, got %s", resolved.ProviderName)
+	}
+	if resolved.Model != "gpt-5.4" {
+		t.Fatalf("expected model gpt-5.4, got %s", resolved.Model)
+	}
+	if resolved.ReasoningEffort != "low" {
+		t.Fatalf("expected reasoning low, got %s", resolved.ReasoningEffort)
+	}
+	if resolved.ServiceTier != "priority" {
+		t.Fatalf("expected tier priority, got %s", resolved.ServiceTier)
+	}
+}
+
+func TestResolveAll_PresetOverriddenByExplicitMarkers(t *testing.T) {
+	cfg := testConfig()
+	resolved, err := ResolveAll("<!-- @fast @route:openai @model:gpt-4.1 -->", nil, cfg)
+	if err != nil {
+		t.Fatalf("ResolveAll error: %v", err)
+	}
+	if resolved.ProviderName != "openai" {
+		t.Fatalf("expected provider openai, got %s", resolved.ProviderName)
+	}
+	if resolved.Model != "gpt-4.1" {
+		t.Fatalf("expected model gpt-4.1, got %s", resolved.Model)
+	}
+	// reasoning should be empty since openai type doesn't resolve reasoning
+	if resolved.ReasoningEffort != "" {
+		t.Fatalf("expected empty reasoning for openai type, got %s", resolved.ReasoningEffort)
+	}
+}
+
+func TestResolveAll_NoPreset(t *testing.T) {
+	cfg := testConfig()
+	resolved, err := ResolveAll("@route:codex", nil, cfg)
+	if err != nil {
+		t.Fatalf("ResolveAll error: %v", err)
+	}
+	if resolved.ProviderName != "codex" {
+		t.Fatalf("expected provider codex, got %s", resolved.ProviderName)
+	}
+	if resolved.Model != "gpt-5" {
+		t.Fatalf("expected model gpt-5, got %s", resolved.Model)
+	}
+	if resolved.ReasoningEffort != "" {
+		t.Fatalf("expected empty reasoning, got %s", resolved.ReasoningEffort)
 	}
 }

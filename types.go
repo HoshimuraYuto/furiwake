@@ -12,12 +12,20 @@ const (
 	AuthTypeCodex  = "codex"
 )
 
+type PresetConfig struct {
+	Provider        string `yaml:"provider"`
+	Model           string `yaml:"model"`
+	ReasoningEffort string `yaml:"reasoning_effort"`
+	ServiceTier     string `yaml:"service_tier"`
+}
+
 type Config struct {
 	Listen          string                    `yaml:"listen"`
 	SpoofModel      string                    `yaml:"spoof_model"`
 	DefaultProvider string                    `yaml:"default_provider"`
 	TimeoutSeconds  int                       `yaml:"timeout_seconds"`
 	Providers       map[string]ProviderConfig `yaml:"providers"`
+	Presets         map[string]PresetConfig   `yaml:"presets"`
 }
 
 type ProviderConfig struct {
@@ -25,6 +33,7 @@ type ProviderConfig struct {
 	URL             string     `yaml:"url"`
 	Model           string     `yaml:"model"`
 	ReasoningEffort string     `yaml:"reasoning_effort"`
+	ServiceTier     string     `yaml:"service_tier"`
 	Auth            AuthConfig `yaml:"auth"`
 }
 
@@ -182,6 +191,7 @@ type ChatGPTResponsesRequest struct {
 	Store             bool                 `json:"store"`
 	Stream            bool                 `json:"stream,omitempty"`
 	Include           []string             `json:"include,omitempty"`
+	ServiceTier       string               `json:"service_tier,omitempty"`
 }
 
 type ReasoningConfig struct {

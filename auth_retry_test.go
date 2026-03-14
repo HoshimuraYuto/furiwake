@@ -52,6 +52,7 @@ func TestDoProviderRequestWithRetry_Retry429(t *testing.T) {
 		"",
 		"",
 		"",
+		"",
 	)
 	if err != nil {
 		t.Fatalf("doProviderRequestWithRetry error: %v", err)
@@ -90,7 +91,7 @@ func TestDoProviderRequestWithRetry_DoesNotRetryCanceledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	_, err := s.doProviderRequestWithRetry(ctx, http.MethodPost, "http://example.com", []byte(`{"m":"x"}`), nil, provider, false, "", "", "")
+	_, err := s.doProviderRequestWithRetry(ctx, http.MethodPost, "http://example.com", []byte(`{"m":"x"}`), nil, provider, false, "", "", "", "")
 	if err == nil {
 		t.Fatal("expected error")
 	}

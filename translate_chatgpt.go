@@ -19,13 +19,14 @@ func (s *Server) proxyChatGPT(
 	provider ProviderConfig,
 	model string,
 	reasoningEffort string,
+	serviceTier string,
 	anthropicReq AnthropicMessageRequest,
 	incomingHeaders http.Header,
 ) {
 	// Codex requires stream:true for all requests. Force it regardless of the
 	// original caller's preference and handle the non-streaming case by
 	// collecting the SSE stream internally.
-	req := translateAnthropicToResponses(anthropicReq, model, reasoningEffort)
+	req := translateAnthropicToResponses(anthropicReq, model, reasoningEffort, serviceTier)
 	req.Stream = true
 	payload, err := json.Marshal(req)
 	if err != nil {
@@ -47,6 +48,7 @@ func (s *Server) proxyChatGPT(
 		routeName,
 		req.Model,
 		req.Reasoning.Effort,
+		req.ServiceTier,
 	)
 	if err != nil {
 		writeJSONError(w, mapTransportError(err), err.Error())
@@ -80,7 +82,7 @@ func (s *Server) proxyChatGPT(
 	writeJSON(w, http.StatusOK, convertResponsesJSONToAnthropic(raw, s.cfg.SpoofModel))
 }
 
-func translateAnthropicToResponses(req AnthropicMessageRequest, model string, reasoningEffort string) ChatGPTResponsesRequest {
+func translateAnthropicToResponses(req AnthropicMessageRequest, model string, reasoningEffort string, serviceTier string) ChatGPTResponsesRequest {
 	out := ChatGPTResponsesRequest{
 		Model:             model,
 		Instructions:      NormalizeSystemText(req.System),
@@ -93,6 +95,9 @@ func translateAnthropicToResponses(req AnthropicMessageRequest, model string, re
 	}
 	if normalized := NormalizeReasoningEffort(reasoningEffort); normalized != "" {
 		out.Reasoning.Effort = normalized
+	}
+	if normalized := NormalizeServiceTier(serviceTier); normalized != "" {
+		out.ServiceTier = normalized
 	}
 
 	if len(req.Tools) > 0 {

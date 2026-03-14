@@ -45,3 +45,17 @@ providers:
     auth:
       type: bearer
       token_env: "OPENROUTER_API_KEY"
+
+# Presets allow combining multiple settings under a single @name marker.
+# Use @fast in a system prompt or message to activate the preset.
+presets:
+  fast:
+    provider: codex
+    model: "gpt-5.4"
+    reasoning_effort: "low"
+    service_tier: "priority"
+  # Example: a high-quality preset
+  # quality:
+  #   provider: codex
+  #   model: "gpt-5.3-codex"
+  #   reasoning_effort: "high"

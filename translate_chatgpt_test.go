@@ -17,7 +17,7 @@ func TestTranslateAnthropicToResponses(t *testing.T) {
 			{Role: "assistant", Content: "world"},
 		},
 	}
-	out := translateAnthropicToResponses(req, "gpt-5", "medium")
+	out := translateAnthropicToResponses(req, "gpt-5", "medium", "priority")
 	if out.Model != "gpt-5" || !out.Stream {
 		t.Fatalf("unexpected request: %+v", out)
 	}
@@ -35,6 +35,9 @@ func TestTranslateAnthropicToResponses(t *testing.T) {
 	}
 	if out.Reasoning.Effort != "medium" {
 		t.Fatalf("unexpected reasoning effort: %+v", out.Reasoning)
+	}
+	if out.ServiceTier != "priority" {
+		t.Fatalf("unexpected service tier: %q", out.ServiceTier)
 	}
 	if out.Input[0].Role != "user" || out.Input[1].Role != "assistant" {
 		t.Fatalf("unexpected roles: %+v", out.Input)
@@ -98,7 +101,7 @@ func TestTranslateAnthropicToResponses_WithToolBlocks(t *testing.T) {
 		},
 		ToolChoice: map[string]interface{}{"type": "tool", "name": "search"},
 	}
-	out := translateAnthropicToResponses(req, "gpt-5", "")
+	out := translateAnthropicToResponses(req, "gpt-5", "", "")
 	if len(out.Input) != 3 {
 		t.Fatalf("unexpected input size: %d", len(out.Input))
 	}

@@ -165,6 +165,52 @@ providers:
 	}
 }
 
+func TestLoadConfig_ValidServiceTier(t *testing.T) {
+	path := writeTempConfig(t, `
+listen: ":9999"
+spoof_model: "claude-test"
+default_provider: codex
+timeout_seconds: 300
+providers:
+  codex:
+    type: chatgpt
+    url: "https://chatgpt.com/backend-api/codex/responses"
+    model: "gpt-5-codex"
+    service_tier: "priority"
+`)
+
+	cfg, err := LoadConfig(path)
+	if err != nil {
+		t.Fatalf("LoadConfig error: %v", err)
+	}
+	if got := cfg.Providers["codex"].ServiceTier; got != "priority" {
+		t.Fatalf("unexpected service_tier normalization: %s", got)
+	}
+}
+
+func TestLoadConfig_InvalidServiceTier(t *testing.T) {
+	path := writeTempConfig(t, `
+listen: ":9999"
+spoof_model: "claude-test"
+default_provider: codex
+timeout_seconds: 300
+providers:
+  codex:
+    type: chatgpt
+    url: "https://chatgpt.com/backend-api/codex/responses"
+    model: "gpt-5-codex"
+    service_tier: "default"
+`)
+
+	_, err := LoadConfig(path)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "service_tier must be one of priority/flex") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestLoadConfig_InvalidReasoningEffort(t *testing.T) {
 	path := writeTempConfig(t, `
 listen: ":9999"
