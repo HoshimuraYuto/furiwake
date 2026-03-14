@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/HoshimuraYuto/furiwake/compare/v1.2.0...v1.3.0) (2026-03-14)
+
+
+### Features
+
+* **router:** add codex fast preset and priority tier ([1967b9a](https://github.com/HoshimuraYuto/furiwake/commit/1967b9a5dcaf697245926445095c5b032d50a265))
+
 # [1.2.0](https://github.com/HoshimuraYuto/furiwake/compare/v1.1.0...v1.2.0) (2026-03-14)
 
 
