@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/HoshimuraYuto/furiwake/compare/v1.1.0...v1.2.0) (2026-03-14)
+
+
+### Features
+
+* **devcontainer:** add crawl4ai-net network ([3ffa946](https://github.com/HoshimuraYuto/furiwake/commit/3ffa9463c3c67c32ae9fb446512ae5f5912a928b))
+
 # [1.1.0](https://github.com/HoshimuraYuto/furiwake/compare/v1.0.1...v1.1.0) (2026-02-28)
 
 
